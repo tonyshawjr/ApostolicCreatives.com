@@ -34,9 +34,9 @@
 
     <!-- Filters Section -->
     <div class="mb-8">
-      <div class="flex space-x-4 mb-4">
+      <div class="flex flex-col md:flex-row gap-4 mb-4">
         <!-- Search -->
-        <div class="flex-1">
+        <div class="w-full md:flex-1">
           <input
             type="text"
             v-model="searchQuery"
@@ -46,7 +46,7 @@
         </div>
 
         <!-- Role Filter for Team -->
-        <div v-if="activeTab === 'team'" class="min-w-[200px]">
+        <div v-if="activeTab === 'team'" class="w-full md:w-48">
           <select
             v-model="roleFilter"
             class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
@@ -59,18 +59,19 @@
         </div>
 
         <!-- Partner Filters -->
-        <select
-          v-if="activeTab === 'partners'"
-          v-model="subscriptionFilter"
-          class="w-48 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
-        >
-          <option value="">All Subscriptions</option>
-          <option value="basic">Basic ($29/month)</option>
-          <option value="premium">Premium ($99/month)</option>
-        </select>
+        <div v-if="activeTab === 'partners'" class="w-full md:w-48">
+          <select
+            v-model="subscriptionFilter"
+            class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+          >
+            <option value="">All Subscriptions</option>
+            <option value="basic">Basic ($29/month)</option>
+            <option value="premium">Premium ($99/month)</option>
+          </select>
+        </div>
 
         <!-- Status Filter for Creatives -->
-        <div v-if="activeTab === 'creatives'" class="min-w-[150px]">
+        <div v-if="activeTab === 'creatives'" class="w-full md:w-48">
           <select
             v-model="statusFilter"
             class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
@@ -139,106 +140,84 @@
       </div>
     </div>
 
-    <!-- User Tables -->
-    <div class="overflow-x-auto">
-      <!-- Creatives Table -->
-      <table v-if="activeTab === 'creatives'" class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
-          <tr>
-            <th v-for="header in creativeHeaders" :key="header" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              {{ header }}
-            </th>
-            <th scope="col" class="relative px-6 py-3 w-[120px]">
-              <span class="sr-only">Actions</span>
-            </th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-200">
-          <tr v-for="item in paginatedData" :key="item.id" class="hover:bg-gray-50">
-            <td class="px-6 py-4 whitespace-nowrap">{{ item.name }}</td>
-            <td class="px-6 py-4 whitespace-nowrap">{{ item.primarySkill }}</td>
-            <td class="px-6 py-4 whitespace-nowrap">
-              <span :class="getActiveStatusClass(item.currentPosition)">
-                {{ item.currentPosition ? 'Active' : 'Inactive' }}
-              </span>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-              <span :class="getReferenceStatusClass(item.pastoralVerification)">
-                {{ item.pastoralVerification ? 'Current' : 'Expired' }}
-              </span>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">{{ item.pastoralReference }}</td>
-            <td class="px-6 py-4 whitespace-nowrap">{{ item.lastActive }}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-              <button @click="editUser(item)" class="text-purple-600 hover:text-purple-900 mr-4">Edit</button>
-              <button @click="deleteUser(item)" class="text-red-600 hover:text-red-900">Delete</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <!-- Tables Container -->
+    <div class="overflow-x-auto bg-white rounded-lg shadow">
+      <div class="min-w-full inline-block align-middle">
+        <!-- Creatives Table -->
+        <table v-if="activeTab === 'creatives'" class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th v-for="header in creativeHeaders" :key="header" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                {{ header }}
+              </th>
+              <th scope="col" class="relative px-3 py-3 w-[100px]">
+                <span class="sr-only">Actions</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-200">
+            <tr v-for="item in paginatedData" :key="item.id" class="hover:bg-gray-50">
+              <td v-for="(value, key) in getVisibleFields(item, 'creatives')" :key="key" class="px-3 py-4 text-sm text-gray-900 whitespace-nowrap">
+                {{ value }}
+              </td>
+              <td class="px-3 py-4 text-right text-sm font-medium whitespace-nowrap">
+                <button @click="editUser(item)" class="text-purple-600 hover:text-purple-900 mr-2">Edit</button>
+                <button @click="deleteUser(item)" class="text-red-600 hover:text-red-900">Delete</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
 
-      <!-- Partners Table -->
-      <table v-if="activeTab === 'partners'" class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
-          <tr>
-            <th v-for="header in partnerHeaders" :key="header" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              {{ header }}
-            </th>
-            <th scope="col" class="relative px-6 py-3 w-[120px]">
-              <span class="sr-only">Actions</span>
-            </th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-200">
-          <tr v-for="item in paginatedData" :key="item.id" class="hover:bg-gray-50">
-            <td class="px-6 py-4 whitespace-nowrap">{{ item.name }}</td>
-            <td class="px-6 py-4 whitespace-nowrap">{{ item.pastorName }}</td>
-            <td class="px-6 py-4 whitespace-nowrap">{{ item.location }}</td>
-            <td class="px-6 py-4 whitespace-nowrap">{{ item.activeJobPosts }}</td>
-            <td class="px-6 py-4 whitespace-nowrap">{{ item.memberSince }}</td>
-            <td class="px-6 py-4 whitespace-nowrap">
-              <span :class="getSubscriptionClass(item.memberCount)">
-                {{ getSubscriptionLevel(item.memberCount) }}
-              </span>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-              <button @click="editUser(item)" class="text-purple-600 hover:text-purple-900 mr-4">Edit</button>
-              <button @click="deleteUser(item)" class="text-red-600 hover:text-red-900">Delete</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+        <!-- Partners Table -->
+        <table v-if="activeTab === 'partners'" class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th v-for="header in partnerHeaders" :key="header" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                {{ header }}
+              </th>
+              <th scope="col" class="relative px-3 py-3 w-[100px]">
+                <span class="sr-only">Actions</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-200">
+            <tr v-for="item in paginatedData" :key="item.id" class="hover:bg-gray-50">
+              <td v-for="(value, key) in getVisibleFields(item, 'partners')" :key="key" class="px-3 py-4 text-sm text-gray-900 whitespace-nowrap">
+                {{ value }}
+              </td>
+              <td class="px-3 py-4 text-right text-sm font-medium whitespace-nowrap">
+                <button @click="editUser(item)" class="text-purple-600 hover:text-purple-900 mr-2">Edit</button>
+                <button @click="deleteUser(item)" class="text-red-600 hover:text-red-900">Delete</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
 
-      <!-- Team Members Table -->
-      <table v-if="activeTab === 'team'" class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
-          <tr>
-            <th v-for="header in teamHeaders" :key="header" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              {{ header }}
-            </th>
-            <th scope="col" class="relative px-6 py-3">
-              <span class="sr-only">Actions</span>
-            </th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-200">
-          <tr v-for="item in paginatedData" :key="item.id" class="hover:bg-gray-50">
-            <td class="px-6 py-4 whitespace-nowrap">{{ item.name }}</td>
-            <td class="px-6 py-4 whitespace-nowrap">{{ item.role }}</td>
-            <td class="px-6 py-4 whitespace-nowrap">{{ item.permissionLevel }}</td>
-            <td class="px-6 py-4 whitespace-nowrap">{{ item.lastLogin }}</td>
-            <td class="px-6 py-4 whitespace-nowrap">
-              <span :class="getAccountStatusClass(item.accountStatus)" class="px-2 py-1 rounded-full text-xs">
-                {{ item.accountStatus }}
-              </span>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-              <button @click="editUser(item)" class="text-purple-600 hover:text-purple-900 mr-4">Edit</button>
-              <button @click="deleteUser(item)" class="text-red-600 hover:text-red-900">Delete</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+        <!-- Team Members Table -->
+        <table v-if="activeTab === 'team'" class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th v-for="header in teamHeaders" :key="header" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                {{ header }}
+              </th>
+              <th scope="col" class="relative px-3 py-3">
+                <span class="sr-only">Actions</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-200">
+            <tr v-for="item in paginatedData" :key="item.id" class="hover:bg-gray-50">
+              <td v-for="(value, key) in getVisibleFields(item, 'team')" :key="key" class="px-3 py-4 text-sm text-gray-900 whitespace-nowrap">
+                {{ value }}
+              </td>
+              <td class="px-3 py-4 text-right text-sm font-medium whitespace-nowrap">
+                <button @click="editUser(item)" class="text-purple-600 hover:text-purple-900 mr-2">Edit</button>
+                <button @click="deleteUser(item)" class="text-red-600 hover:text-red-900">Delete</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <!-- Pagination -->
@@ -682,18 +661,17 @@ const filteredData = computed(() => {
     })
   }
 
-  // Inside filteredData computed property, add this after the search filter:
-// Apply subscription filter for partners
-if (activeTab.value === 'partners' && subscriptionFilter.value) {
-  data = data.filter(item => {
-    if (subscriptionFilter.value === 'basic') {
-      return parseInt(item.memberCount) < 500
-    } else if (subscriptionFilter.value === 'premium') {
-      return parseInt(item.memberCount) >= 500
-    }
-    return true
-  })
-}
+  // Apply subscription filter for partners
+  if (activeTab.value === 'partners' && subscriptionFilter.value) {
+    data = data.filter(item => {
+      if (subscriptionFilter.value === 'basic') {
+        return parseInt(item.memberCount) < 500
+      } else if (subscriptionFilter.value === 'premium') {
+        return parseInt(item.memberCount) >= 500
+      }
+      return true
+    })
+  }
 
   // Apply status filter
   if (statusFilter.value) {
@@ -749,7 +727,7 @@ watch(activeTab, () => {
   searchQuery.value = ''
   statusFilter.value = ''
   roleFilter.value = ''
-  subscriptionFilter.value = '' // Add this line
+  subscriptionFilter.value = ''
   currentPage.value = 1
 })
 
@@ -874,5 +852,39 @@ const roleDescriptions = {
   'Technical Lead': 'Manages platform technical infrastructure',
   'Community Manager': 'Facilitates community engagement and growth',
   'Platform Support': 'Provides technical and general platform support'
+}
+
+// Helper function to get visible fields for each table
+const getVisibleFields = (item, tab) => {
+  switch (tab) {
+    case 'creatives':
+      return {
+        name: item.name,
+        primarySkill: item.primarySkill,
+        status: item.verificationStatus,
+        referenceStatus: item.pastoralVerification,
+        pastor: item.pastoralReference,
+        lastActive: item.lastActive
+      }
+    case 'partners':
+      return {
+        churchName: item.name,
+        pastorName: item.pastorName,
+        location: item.location,
+        activeJobPosts: item.activeJobPosts,
+        memberSince: item.memberSince,
+        subscription: getSubscriptionLevel(item.memberCount)
+      }
+    case 'team':
+      return {
+        name: item.name,
+        role: item.role,
+        permissionLevel: item.permissionLevel,
+        lastLogin: item.lastLogin,
+        accountStatus: item.accountStatus
+      }
+    default:
+      return {}
+  }
 }
 </script>
