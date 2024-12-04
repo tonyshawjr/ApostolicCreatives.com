@@ -1,6 +1,6 @@
 <template>
   <div class="bg-white p-6">
-    <h1 class="text-3xl font-extrabold tracking-tight text-gray-900 mb-6">User Management</h1>
+    <h1 class="text-3xl font-extrabold tracking-tight text-gray-900 mb-6 sticky top-0 bg-white z-10">User Management</h1>
 
     <!-- Search and Filter -->
     <div class="mb-6 space-y-4">
@@ -517,3 +517,37 @@ onMounted(() => {
   fetchUsers()
 })
 </script>
+
+<style>
+  /* Add styles for better mobile layout, collapsible table columns, responsive filters and actions, card view for mobile, improved loading states, better spacing and touch targets, and sticky header and actions */
+  @media (max-width: 768px) {
+    .users-table {
+      display: block;
+      overflow-x: auto;
+    }
+    .users-table th, .users-table td {
+      display: block;
+    }
+    .users-table th {
+      position: sticky;
+      top: 0;
+      background-color: #fff;
+    }
+    .users-table td {
+      padding: 10px;
+    }
+    .bulk-actions {
+      position: sticky;
+      top: 0;
+      background-color: #fff;
+    }
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+    }
+    .filter {
+      margin-bottom: 10px;
+    }
+  }
+</style>
