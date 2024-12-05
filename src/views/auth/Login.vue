@@ -138,25 +138,37 @@ async function handleLogin() {
   try {
     loading.value = true
     error.value = ''
+    console.log('Starting login process...')
     
     const result = await authStore.login({
       email: email.value,
       password: password.value
     })
     
+    console.log('Login result:', result)
+    
     if (result.success) {
-      const userRole = authStore.userRole
-      if (userRole === 'creative') {
+      const userType = authStore.userType
+      console.log('User type:', userType)
+      
+      if (userType === 'creative') {
+        console.log('Redirecting to creative dashboard...')
         router.push('/creative/dashboard')
-      } else if (userRole === 'partner') {
+      } else if (userType === 'partner') {
+        console.log('Redirecting to partner dashboard...')
         router.push('/partner/dashboard')
-      } else if (userRole === 'admin') {
+      } else if (userType === 'team') {
+        console.log('Redirecting to admin dashboard...')
         router.push('/admin/dashboard')
+      } else {
+        console.error('Unknown user type:', userType)
+        error.value = 'Invalid user type'
       }
     } else {
-      error.value = result.error
+      error.value = result.error || 'Login failed'
     }
   } catch (e) {
+    console.error('Login error:', e)
     error.value = 'An unexpected error occurred'
   } finally {
     loading.value = false
