@@ -29,8 +29,10 @@
                 <!-- Profile Dropdown -->
                 <div class="relative">
                   <button @click="toggleDropdown" class="flex items-center space-x-3">
-                    <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=3000&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Tony Shaw" class="h-8 w-8 rounded-full object-cover">
-                    <span class="hidden md:inline text-sm font-medium text-white">Tony Shaw</span>
+                    <img :src="user?.profilePhotoUrl || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(userName)" 
+                         :alt="userName" 
+                         class="h-8 w-8 rounded-full object-cover border border-gray-300">
+                    <span class="hidden md:inline text-sm font-medium text-white">{{ userName }}</span>
                   </button>
 
                   <div v-if="isDropdownOpen" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 z-50">
@@ -49,8 +51,10 @@
                 <!-- Profile Dropdown -->
                 <div class="relative">
                   <button @click="toggleDropdown" class="flex items-center space-x-3">
-                    <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=3000&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Tony Shaw" class="h-8 w-8 rounded-full object-cover">
-                    <span class="hidden md:inline text-sm font-medium text-white">Tony Shaw</span>
+                    <img :src="user?.profilePhotoUrl || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(userName)" 
+                         :alt="userName" 
+                         class="h-8 w-8 rounded-full object-cover border border-gray-300">
+                    <span class="hidden md:inline text-sm font-medium text-white">{{ userName }}</span>
                   </button>
 
                   <div v-if="isDropdownOpen" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 z-50">
@@ -199,12 +203,36 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 
-const userName = ref('Tony Shaw')
-const userAvatar = ref('https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=3000&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')
 const router = useRouter()
+const authStore = useAuthStore()
+const user = computed(() => authStore.user)
+
+const userName = computed(() => {
+  // If no user, return default
+  if (!user.value) return 'User'
+
+  // For partners, show church name and contact person
+  if (user.value.type === 'partner' && user.value.partnerProfile) {
+    const churchName = user.value.partnerProfile.name
+    const contactName = user.value.firstName && user.value.lastName 
+      ? `${user.value.firstName} ${user.value.lastName}`
+      : user.value.email
+    return `${churchName} (${contactName})`
+  }
+
+  // For other users, show first and last name
+  if (user.value.firstName && user.value.lastName) {
+    return `${user.value.firstName} ${user.value.lastName}`
+  }
+
+  // Fallback to email
+  return user.value.email
+})
+
 const isDropdownOpen = ref(false)
 const showNotifications = ref(false)
 const isMobileMenuOpen = ref(false)

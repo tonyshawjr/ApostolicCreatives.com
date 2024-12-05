@@ -100,48 +100,26 @@ router.post('/login', async (req, res) => {
     res.json(response);
 
   } catch (error) {
-    console.error('\n🚨 Login Error');
-    console.log('------------');
     console.error('Login error:', error);
-    res.status(500).json({ message: 'Internal server error during login' });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
 // Get current user endpoint
 router.get('/me', async (req, res) => {
   try {
-    // Get token from header
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) {
       return res.status(401).json({ message: 'No token provided' });
     }
 
-    // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    const user = await User.findOne({ where: { user_id: decoded.id } });
     
-    // Get user
-    const user = await User.findByPk(decoded.id);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Check if user is active
-    if (user.status !== 'active') {
-      return res.status(403).json({ message: 'Account is not active' });
-    }
-
-    // Send response
-    console.log('\n📦 Response');
-    console.log('------------');
-    console.log('Sending response:', {
-      id: user.user_id,
-      email: user.email,
-      type: user.user_type,
-      firstName: user.first_name,
-      lastName: user.last_name,
-      status: user.status,
-      profilePhotoUrl: user.profile_photo_url
-    });
     res.json({
       id: user.user_id,
       email: user.email,
@@ -152,16 +130,8 @@ router.get('/me', async (req, res) => {
       profilePhotoUrl: user.profile_photo_url
     });
   } catch (error) {
-    console.error('\n🚨 Auth Check Error');
-    console.log('------------------');
-    console.error('Auth check error:', error);
-    if (error.name === 'JsonWebTokenError') {
-      return res.status(401).json({ message: 'Invalid token' });
-    }
-    if (error.name === 'TokenExpiredError') {
-      return res.status(401).json({ message: 'Token expired' });
-    }
-    res.status(500).json({ message: 'Internal server error during authentication' });
+    console.error('Error fetching user:', error);
+    res.status(401).json({ message: 'Invalid token' });
   }
 });
 
