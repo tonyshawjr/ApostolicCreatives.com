@@ -121,29 +121,58 @@ const error = ref(null);
 
 const handleSubmit = async () => {
   try {
-    console.log('Attempting to log in with:', email.value);
-    loading.value = true;
-    await authStore.login(email.value, password.value);
-    console.log('Login successful');
+    console.log('Starting login process...');
+    console.log('Form values:', {
+      email: email.value,
+      password: password.value ? '[REDACTED]' : 'missing'
+    });
     
-    // Redirect based on user role
-    const role = authStore.userRole;
-    switch (role) {
-      case 'creative':
-        router.push('/creative/dashboard');
-        break;
-      case 'church':
-        router.push('/church/dashboard');
-        break;
-      case 'admin':
-        router.push('/admin/dashboard');
-        break;
-      default:
-        router.push('/');
+    loading.value = true;
+    error.value = null;  // Clear any previous errors
+    
+    console.log('Calling auth store login...');
+    const result = await authStore.login({ 
+      email: email.value, 
+      password: password.value 
+    });
+    console.log('Auth store login result:', result);
+    
+    if (!result.success) {
+      console.log('Login failed:', result.error);
+      error.value = result.error;
+      return;
     }
-  } catch (error) {
-    console.error('Login error:', error);
-    error.value = error.message;
+    
+    console.log('Login successful, user:', authStore.user);
+    
+    // Redirect based on user type
+    const userType = authStore.user?.type;
+    console.log('User type for redirect:', userType);
+    
+    let redirectPath = '/';
+    switch (userType) {
+      case 'creative':
+        redirectPath = '/creative/dashboard';
+        break;
+      case 'partner':
+        redirectPath = '/partner/dashboard';
+        break;
+      case 'team':
+        redirectPath = '/admin/dashboard';
+        break;
+    }
+    
+    console.log('Redirecting to:', redirectPath);
+    router.push(redirectPath);
+    
+  } catch (err) {
+    console.error('Login error:', err);
+    console.error('Error details:', {
+      message: err.message,
+      response: err.response?.data,
+      status: err.response?.status
+    });
+    error.value = 'Failed to login. Please try again.';
   } finally {
     loading.value = false;
   }

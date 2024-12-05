@@ -11,26 +11,50 @@ export const useAuthStore = defineStore('auth', {
 
   getters: {
     isAuthenticated: (state) => !!state.token,
-    userRole: (state) => state.user?.role,
+    userType: (state) => state.user?.type,
   },
 
   actions: {
-    async login({ email, password }) {
+    async login(credentials) {
       try {
+        console.log('Auth store: Starting login request...');
         this.loading = true;
         this.error = null;
         
-        const response = await axios.post('http://localhost:4000/api/auth/login', { email, password });
+        console.log('Auth store: Sending request to server...');
+        const response = await axios.post('http://localhost:4000/api/auth/login', credentials);
+        console.log('Auth store: Received response:', {
+          status: response.status,
+          hasToken: !!response.data.token,
+          hasUser: !!response.data.user
+        });
+        
+        if (!response.data.token || !response.data.user) {
+          console.error('Auth store: Invalid response structure:', response.data);
+          throw new Error('Invalid response from server');
+        }
         
         this.token = response.data.token;
         this.user = response.data.user;
+        
+        // Store in localStorage
         localStorage.setItem('token', this.token);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
+        localStorage.setItem('user', JSON.stringify(this.user));
+        
+        // Set default auth header
         axios.defaults.headers.common['Authorization'] = `Bearer ${this.token}`;
         
+        console.log('Auth store: Login successful, user:', this.user);
         return { success: true };
       } catch (error) {
-        this.error = error.response?.data?.message || 'Login failed';
+        console.error('Auth store: Login error:', error);
+        console.error('Auth store: Error details:', {
+          message: error.message,
+          response: error.response?.data,
+          status: error.response?.status
+        });
+        
+        this.error = error.response?.data?.message || 'Login failed. Please check your credentials.';
         return { 
           success: false, 
           error: this.error 
@@ -40,29 +64,7 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    async register(userData) {
-      try {
-        this.loading = true;
-        this.error = null;
-        const response = await axios.post('http://localhost:4000/api/auth/register', userData);
-        this.token = response.data.token;
-        this.user = response.data.user;
-        localStorage.setItem('token', this.token);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-        axios.defaults.headers.common['Authorization'] = `Bearer ${this.token}`;
-        return { success: true };
-      } catch (error) {
-        this.error = error.response?.data?.message || 'Registration failed';
-        return {
-          success: false,
-          error: this.error
-        };
-      } finally {
-        this.loading = false;
-      }
-    },
-
-    async logout() {
+    logout() {
       this.user = null;
       this.token = null;
       localStorage.removeItem('token');
@@ -74,14 +76,15 @@ export const useAuthStore = defineStore('auth', {
       try {
         const response = await axios.get('http://localhost:4000/api/auth/me');
         this.user = response.data;
+        localStorage.setItem('user', JSON.stringify(this.user));
         return { success: true };
       } catch (error) {
-        this.logout();
-        return {
-          success: false,
-          error: error.response?.data?.message || 'Failed to fetch user'
-        };
+        console.error('Error fetching user:', error);
+        if (error.response?.status === 401) {
+          this.logout();
+        }
+        return { success: false, error: error.message };
       }
-    },
+    }
   },
 });

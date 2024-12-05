@@ -65,7 +65,7 @@ const routes = [
   {
     path: '/creative',
     component: MainLayout,
-    meta: { requiresAuth: true, role: 'creative' },
+    meta: { requiresAuth: true, userType: 'creative' },
     children: [
       {
         path: '',
@@ -112,7 +112,7 @@ const routes = [
   {
     path: '/partner',
     component: MainLayout,
-    meta: { requiresAuth: true, role: 'partner' },
+    meta: { requiresAuth: true, userType: 'partner' },
     children: [
       {
         path: 'dashboard',
@@ -121,11 +121,11 @@ const routes = [
       }
     ]
   },
-  // Admin Routes
+  // Admin/Team Routes
   {
     path: '/admin',
     component: MainLayout,
-    meta: { requiresAuth: true, role: 'admin' },
+    meta: { requiresAuth: true, userType: 'team' },
     children: [
       {
         path: '',
@@ -170,16 +170,28 @@ const router = createRouter({
   routes
 })
 
+// Navigation guard
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
-  const requiredRole = to.matched.find(record => record.meta.role)?.meta.role
+  const requiredType = to.matched.find(record => record.meta.userType)?.meta.userType
+
+  console.log('Route guard:', {
+    path: to.path,
+    requiresAuth,
+    requiredType,
+    userType: authStore.userType,
+    isAuthenticated: authStore.isAuthenticated
+  })
 
   if (requiresAuth && !authStore.isAuthenticated) {
+    console.log('Not authenticated, redirecting to login')
     next('/login')
-  } else if (requiredRole && authStore.userRole !== requiredRole) {
+  } else if (requiredType && authStore.userType !== requiredType) {
+    console.log('Wrong user type, redirecting to home')
     next('/')
   } else {
+    console.log('Navigation allowed')
     next()
   }
 })
