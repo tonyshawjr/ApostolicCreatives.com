@@ -45,6 +45,10 @@ export const useAuthStore = defineStore('auth', {
         axios.defaults.headers.common['Authorization'] = `Bearer ${this.token}`;
         
         console.log('Auth store: Login successful, user:', this.user);
+        
+        // Fetch fresh user data
+        await this.fetchUser();
+        
         return { success: true };
       } catch (error) {
         console.error('Auth store: Login error:', error);
